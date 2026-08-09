@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/**
+ * v2 — "Instrument"
+ *
+ * Dark-first. The reference is a well-made analytics product rather than a
+ * brochure: near-black canvas, a fine measurement grid, monospace metadata,
+ * and exactly two accents used as signal rather than decoration.
+ *
+ * Fonts must live in `@theme inline` — a plain `@theme` block is resolved at
+ * build time and cannot hold a var() pointing at next/font's class-scoped
+ * variables.
+ */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: var(--font-mono-jb), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+}
+
+@layer base {
+  /* Dark is the default here; light is the considered alternative. Each
+     token is one light-dark() pair so the two palettes can't drift out of
+     sync between the explicit data-theme selector and the prefers-color-
+     scheme fallback below — only color-scheme itself has to be repeated.
+     All pairs verified at >= 4.5:1 against their surface. */
+  :root {
+    color-scheme: dark;
+
+    --canvas: light-dark(#fbfbfd, #08090c);
+    --surface: light-dark(#ffffff, #101219);
+    --surface-2: light-dark(#f3f4f8, #171a23);
+    --ink: light-dark(#0b0d12, #f4f6fb);
+    --ink-soft: light-dark(#3a4152, #b4bccc);
+    --muted: light-dark(#646c7e, #8a93a6);
+    --line: light-dark(#e4e6ec, #232733);
+    --line-strong: light-dark(#cfd3dd, #333a4a);
+    --accent: light-dark(#0f766e, #2dd4bf);
+    --accent-2: light-dark(#6d3fe0, #a78bfa);
+    --accent-glow: light-dark(rgba(15, 118, 110, 0.1), rgba(45, 212, 191, 0.16));
+    --accent-2-glow: light-dark(rgba(109, 63, 224, 0.08), rgba(167, 139, 250, 0.14));
+    --on-accent: light-dark(#ffffff, #08090c);
+
+    --radius: 1rem;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+      color-scheme: light;
+    }
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    position: relative;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Measurement grid — the "instrument" cue. Fades out down the page so it
+     never competes with content. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-image: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--line) 55%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--line) 55%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 20%, transparent 75%);
+    pointer-events: none;
+  }
+
+  /* Two soft accent fields. Low opacity — they tint, they do not glow. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(40rem 28rem at 12% -5%, var(--accent-glow), transparent 70%),
+      radial-gradient(34rem 24rem at 88% 8%, var(--accent-2-glow), transparent 70%);
+    pointer-events: none;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .scroll-x {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  /* Monospace micro-label used for all metadata. */
+  .label-mono {
+    font-family: var(--font-mono-jb), ui-monospace, monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Panel — the base surface for every tile. */
+  .panel {
+    position: relative;
+    background-color: color-mix(in srgb, var(--surface) 82%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Gradient hairline for the one or two tiles that should lead the eye. */
+  .panel-lit {
+    position: relative;
+  }
+
+  .panel-lit::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      var(--accent),
+      transparent 40%,
+      transparent 60%,
+      var(--accent-2)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  /* Cursor-tracked highlight. --mx/--my are set by SpotlightCard. */
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      16rem circle at var(--mx, 50%) var(--my, 0%),
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .spotlight:hover::after {
+      opacity: 1;
+    }
+  }
+
+  .gradient-text {
+    background: linear-gradient(100deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Scroll reveal. Elements start hidden only when JS is present to reveal
+     them — `.reveal` is added by the component, so no-JS keeps content
+     visible. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 46s linear infinite;
+  }
+
+  .marquee-mask {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 8%,
+      #000 92%,
+      transparent
+    );
+  }
+
+  @media (hover: hover) {
+    .marquee:hover .marquee-track {
+      animation-play-state: paused;
+    }
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /**
+   * Theme-toggle icon, chosen by CSS so the button needs no client state.
+   * Dark is the default here, so the sun (switch to light) shows first. The
+   * data-theme rules come last so an explicit choice wins either way.
+   */
+  .theme-icon-sun {
+    display: inline;
+  }
+
+  .theme-icon-moon {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .theme-icon-sun {
+      display: none;
+    }
+
+    :root:not([data-theme]) .theme-icon-moon {
+      display: inline;
+    }
+  }
+
+  :root[data-theme="light"] .theme-icon-sun {
+    display: none;
+  }
+
+  :root[data-theme="light"] .theme-icon-moon {
+    display: inline;
+  }
+
+  :root[data-theme="dark"] .theme-icon-sun {
+    display: inline;
+  }
+
+  :root[data-theme="dark"] .theme-icon-moon {
+    display: none;
+  }
+}
